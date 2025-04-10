@@ -25,14 +25,36 @@ class DataAnonymizer:
         self.output_tokens = 0
         self.total_tokens = 0
         # Use the provided absolute path for prompts directory
-        current_file_path = os.path.abspath(os.path.dirname(__file__))
-        project_root = os.path.dirname(os.path.dirname(current_file_path))
-        self.prompts_dir = os.path.join(current_file_path, "Prompt")
+        possible_paths = [
+            # Direct path in root directory
+            Path("Prompt"),
+            # Current directory
+            Path(os.path.join(os.path.dirname(os.path.abspath(__file__)), "Prompt")),
+            # One level up
+            Path(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "Prompt")),
+            # In analysis folder one level up
+            Path(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "analysis", "Prompt")),
+            # Two levels up
+            Path(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "Prompt"))
+        ]
         
-        if not self.prompts_dir.exists():
-            raise ValueError(f"Prompts directory not found at {self.prompts_dir}")
+        self.prompts_dir = None
+        for path in possible_paths:
+            if isinstance(path, Path) and path.exists():
+                self.prompts_dir = path
+                self.logger.info(f"Found Prompt directory at: {path}")
+                break
+            elif isinstance(path, str) and os.path.exists(path):
+                self.prompts_dir = Path(path)
+                self.logger.info(f"Found Prompt directory at: {path}")
+                break
         
-        # Initialize prompt file mapping with correct filenames
+        if not self.prompts_dir:
+            # Instead of failing, create the directory and log a warning
+            self.logger.warning("Prompt directory not found in any expected location, using current directory")
+            self.prompts_dir = Path(os.path.join(os.path.dirname(os.path.abspath(__file__)), "Prompt"))
+            os.makedirs(self.prompts_dir, exist_ok=True)
+    # Initialize prompt file mapping with correct filenames
         self.prompt_files = {
             "name": "Name.txt",
             "email": "Email_address.txt",
@@ -41,9 +63,7 @@ class DataAnonymizer:
             "date": "Data_of_birth.txt",
             "employer": "Employer.txt",
             "salary": "Salary.txt",
-           
-        }
-        
+        }        
         # Validate prompt files exist
         self._validate_prompt_files()
         
