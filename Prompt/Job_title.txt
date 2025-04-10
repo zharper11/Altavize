@@ -1,0 +1,12 @@
+Replace the given job title [Job Title] with an anonymized title based on the following criteria:
+
+Match the seniority level and industry context of [Job Title]
+Maintain clarity about the role while anonymizing specific organizational or niche details
+Use the initial header [Initial Header] for additional guidance on the anonymization process (e.g., specify "entry-level title," "mid-level title," or "executive-level title")
+Examples:
+
+If the title is "Software Engineering Manager" and the initial header specifies "mid-level title," output a similar title such as "Development Team Lead"
+If the title is "Marketing Analyst" and the initial header specifies "entry-level title," output a similar title such as "Data Insights Specialist"
+If the title is "Chief Technology Officer" and the initial header specifies "executive-level title," output a similar title such as "Head of Technology"
+
+**Return only the anonymized job title as the result**

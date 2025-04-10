@@ -1,0 +1,13 @@
+Replace the given employer [Employer] with an anonymized employer name based on the following criteria:
+
+Match the size, industry, and general geographical context of [Employer]
+Where possible, substitute [Employer] with a competitor or a similar company, ensuring the pool of options is sufficiently large to avoid specific identification
+If no appropriate competitor or similar company exists, create a generic yet realistic anonymized employer name that aligns with the industry and context
+Use the initial header [Initial Header] for additional guidance on the anonymization process (e.g., specify "global corporation," "regional business," or "startup")
+Examples:
+
+If the employer is "Google" and the initial header specifies "global corporation," output a competitor name such as "Microsoft" or anonymized name like "TechVision International"
+If the employer is "Patel & Sons Auto Repair" and the initial header specifies "regional business," output a similar business such as "Smith's Auto Repair" or a generic anonymized name like "Midtown Auto Specialists"
+If the employer is "BrightHealth Startups" and the initial header specifies "startup," output a competitor such as "Wellness Labs" or anonymized name like "WellCare Innovations"
+
+**Return only the anonymized employer name as the result**

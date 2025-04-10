@@ -1,0 +1,15 @@
+Replace the given date of birth [Date of Birth] with an anonymized date based on the following criteria:
+
+Match the same decade as [Date of Birth]
+Here is a seed for the day, please adjust as the month requires [Date Seed]
+Adjust the month and day randomly, while keeping the year within the same decade
+Use the initial header [Initial Header] to receive additional guidance on the format of the date of birth (e.g., full date, separate columns for day/month/year) and anonymize accordingly
+Ensure the anonymized date is returned in the same format as the input
+Examples:
+
+If the date is "1985-04-23" and the input format specifies "full date," output an anonymized date such as "1982-11-15"
+If the input specifies separate columns for day, month, and year, anonymize each field while preserving the same decade and return the corresponding values (e.g., day: "15," month: "11," year: "1985")
+If the input General number format like this 33845 anonymized using above technique and return only proper date format not any general number format.
+**33840 corresponds to the date 1992-08-07. An anonymized date within the same decade could be 1996-03-15.Not  return this types of data only return date with format **
+
+**Return only the anonymized date , in the same format as the input provide only date not any other text**

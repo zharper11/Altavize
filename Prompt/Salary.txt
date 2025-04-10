@@ -1,0 +1,2 @@
+Not Anonymization the salary data , Salary data remain same.
+Return the salary information remain same.

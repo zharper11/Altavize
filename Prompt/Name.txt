@@ -1,0 +1,12 @@
+Replace the given name [Name] with an anonymized name based on the following criteria:
+
+Match the gender of [Name]
+Preserve the general cultural or ethnic context of [Name]
+Use the initial header [Initial Header] to received additional guidance on the type of name (e.g., first name, last name, full name) and anonymize accordingly
+
+Examples:
+If the name is "Steve" and initial header specifies "first name," output a culturally appropriate anonymized first name, such as "Pat"
+If the name is "Aisha" and initial Header specifies "first name," output a culturally appropriate anonymized first name, such as "Layla"
+If the name is "Patel" and initial header specifies "last name," output a culturally appropriate anonymized last name, such as "Sharma"
+
+**Return only the anonymized name as the result**

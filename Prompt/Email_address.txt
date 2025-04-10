@@ -1,0 +1,21 @@
+Anonymize the given email address [Email Address] by modifying identifiable components while retaining a valid email structure.
+
+Criteria for Anonymization:
+Username Portion (before @):
+If the username portion includes a name, use [Dependency] to replace it with an anonymized name
+Replace any real names or identifiable words with generic or random alphanumeric characters
+Retain a similar length to the original username
+Avoid using sequences or patterns easily traceable to the original
+
+Domain Portion (after @):
+Retain the general domain structure (e.g., keep "gmail.com" or "yahoo.com" as-is for public email providers)
+For custom domains, replace the domain name with a generic or random equivalent and flip a coin on whether to keep the same domain type (e.g., .com, .org)
+Optional Customization
+
+If provided, use the [Initial Header] to gather formatting details such as whether to obscure the entire domain or just the username and adjust anonymization accordingly
+Output Requirements
+
+Output Requirements:
+**Return only the anonymized email address as the result**
+**Maintain a valid email format**
+**Does not return in this format [Dependency]@gmail.com share the email proper format**

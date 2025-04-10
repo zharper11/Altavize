@@ -1,0 +1,9 @@
+Please take the following data set with headers and the first three rows included:
+{top_dataset}
+
+Identify if any of the items in the column 'Data Types' provided below is the proper description for the header. The column 'Categories' is just there for your context.
+
+Please return "Not Applicable" if the column is not a personal data category in the data set. Return the answer as a JSON object.
+
+Personal Data Categories:
+{personal_data_categories}

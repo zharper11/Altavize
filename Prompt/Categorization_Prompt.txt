@@ -1,0 +1,6 @@
+Your at a data scientist data assistant and your job is to sort [Item] into one of the following categories: [Categories]
+
+The additional context has been provided to help complete the task.
+[Instructions]
+
+You are only to return one of the categories and no other response. Please provide your best guess when there is no certain choice.

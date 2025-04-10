@@ -1,0 +1,162 @@
+**Instructions**
+
+Anonymize (random pick) location data at or below the specified hierarchy level ([Limit Hierarchy])
+Retain fields above the specified hierarchy level as-is.
+Ensure the output includes the same headers as the input data, with the appropriate fields anonymized.
+Maintain realism constraints to keep outputs consistent.  
+   – If the country is “USA,” pick a valid U.S. city and matching zip code (for example, “Seattle” and “98101”).  
+   – If the address is in another country, use the appropriate format for that locale (e.g., Canadian postal codes like “K1A 0B1” and the correct province) to keep anonymized data believable.
+
+Hierarchy Levels (And general instructions for approaching)
+1. Street Address: Replace with a random, valid street address from the same locality or region. Use a seeded approach for repeatable outputs.
+2. Zip Code: Shift within the given city, if possible, or use a nearby valid zip code that aligns with the location's metro area.
+3. City: Replace with a city of similar size within the same subnational division, aiming to keep it within a realistic commuting radius or metropolitan area.
+4. Subnational Division: Replace with a nearby or equivalent region. For example, substitute U.S. states with neighboring states or provinces within the same country.
+5. Country: Replace with a random country, maintaining global consistency in format and representation.
+
+
+**Level 1**
+**Example**
+
+Location Data:
+123 Maple Street, San Francisco, CA 94103, USA
+
+Output:
+{
+    "Address": "456 Oak Avenue",
+    "Zip Code": "94103"
+    "City": "San Francisco",
+    "Country": "USA"
+    "State":"CA"
+}
+
+**Level 2**
+**Example**
+Input:
+789 Elm Drive, Los Angeles, CA 90012, USA
+
+
+Output:
+{
+    "Address": "789 Elm Drive",
+    "Zip Code": "90015"
+    "City": "Los Angeles",
+    "Country": "USA"
+    "State":"CA"
+}
+
+
+
+
+**Level 3**
+**Example**
+Input:
+567 Pine Lane, Austin, TX 78701, USA
+
+Output:
+567 Pine Lane, San Antonio, TX 78701, USA
+
+Output:
+{
+    "Address": "567 Pine Lane",
+    "Zip Code": "90015"
+    "City": "San Antonio",
+    "Country": "USA"
+    "State":"Texas"
+}
+
+**Level 4**
+**Example**
+
+Input:
+342 Birch Road, Portland, OR 97205, USA
+
+Output:
+342 Birch Road, Seattle, WA 97205, USA
+Output:
+{
+    "Address": "342 Birch Road",
+    "Zip Code": "97205"
+    "City": "Seattle",
+    "Country": "USA"
+    "State":" WA"
+}
+**Level 5**
+**Example**
+Input:
+18 Cherry Street, London, England, United Kingdom
+
+Output:
+18 Cherry Street, Paris, Île-de-France, France
+Output:
+342 Birch Road, Seattle, WA 97205, USA
+Output:
+{
+    "Address": "18 Cherry Stree",
+    "Zip Code": "97205"
+    "City": "Seattle",
+    "Country": "USA"
+    "State":" WA"
+}
+
+
+
+**Example 1** 
+Input:
+
+Limit Hierarchy: City
+
+Location Data:
+Address,City,Zip Code,Country
+456 Devin Street, Tampa, 33609, USA
+
+Output:
+{
+    "Address": "67145 Gonzalez Point",
+    "Zip Code": "32218"
+    "City": "Jacksonville",
+    "Country": "USA"
+    "State":"Florida"
+}
+**Example 2** 
+Input:
+
+Limit Hierarchy: City
+
+Location Data:
+Address,City,Zip Code,Country
+127 Tiffany Road, "Ames, IA", 55010
+
+Output:
+{
+    "Address": "23 River Street",
+    "Zip Code": "50841"
+    "City": "Corning, IA",
+    "State":"Iowa"
+}
+**Example 3** 
+Input:
+
+Limit Hierarchy: City
+
+Location Data:
+Address
+63733 Miller Branch, Menlo Park, CA, 94016
+
+Output:
+{
+    "Address": "42 Reyes Coves, Palo Alto, CA 94302"
+}
+
+**Final Requirements**
+Here is the data entry to process:
+[Location Data]
+
+Here is a fake street address to get you started:
+[Fake Address]
+
+Anonymize all location fields at or below the [Limit Hierarchy].
+
+Retain all headers but only those that appear in the input; do not add or remove columns. The JSON object should have exactly [Dimensions] fields
+**Stricky: only return the data in json format not write the content only  provide me  data like a example**
+Return the anonymized location data organized in a valid JSON object, matching the exact headers and field counts from the input with appropriate anonymization.

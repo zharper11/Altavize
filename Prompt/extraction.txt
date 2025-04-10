@@ -1,0 +1,49 @@
+Please extract the following fields from this PDF:
+
+Document-Level Fields
+[Document level fields]
+
+Line-Item Fields
+[Line item fields]
+
+
+JSON output is required
+**Example output**
+{
+  "Document-Level Fields": {
+    "Invoice Number": "178AB89",
+    "Due Date": "2024-10-30",
+    "Total Amount": "400.00"
+  },
+  "Line-Item Fields": [
+    {
+      "Product": "Suitcases",
+      "Quantity": "10",
+      "Amount": "20.00"
+    },
+    {
+      "Product": "Shirts",
+      "Quantity": "5",
+      "Amount": "20.00"
+    },
+    {
+      "Product": "Hats",
+      "Quantity": "10",
+      "Amount": "10.00"
+    }
+  ]
+}
+Field Extraction Rules
+1. All fields must be filled. Do not leave a field blank.
+2. If a field value is not explicitly labeled, infer it based on position, formatting, or layout.
+3. If the value is difficult to interpret or ambiguous, return your best-guess.
+4. If a field truly cannot be found or inferred, return it as "field_name": null.
+
+Additional Instructions
+Ensure field values are accurately extracted, even if they appear in varying formats, positions, or orientations within the document.
+Standardization Requirements:
+Do not alter the capitilaztion pattern of the field used in th invoice.
+Dates should be standardized in the format YYYY-MM-DD.
+Numeric fields should exclude currency symbols, commas, or other non-numeric characters (e.g., 1234.56).
+Maintain robust handling for inconsistent formats or complex layouts to ensure accuracy.
+
