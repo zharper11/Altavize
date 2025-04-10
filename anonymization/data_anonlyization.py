@@ -25,9 +25,9 @@ class DataAnonymizer:
         self.output_tokens = 0
         self.total_tokens = 0
         # Use the provided absolute path for prompts directory
-        current_file_path = os.path.dirname(os.path.abspath(__file__))
+        current_file_path = os.path.abspath(os.path.dirname(__file__))
         project_root = os.path.dirname(os.path.dirname(current_file_path))
-        self.prompts_dir = Path(os.path.join(project_root, "analysis", "Prompt"))
+        self.prompts_dir = os.path.join(current_file_path, "Prompt")
         
         if not self.prompts_dir.exists():
             raise ValueError(f"Prompts directory not found at {self.prompts_dir}")
