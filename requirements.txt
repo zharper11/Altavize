@@ -1,0 +1,14 @@
+Flask
+Flask-Cors
+numpy
+openai
+pandas
+tiktoken
+scipy
+stripe
+azure-cosmos
+PyMuPDF
+python-dotenv
+Werkzeug
+aiohttp
+gunicorn
