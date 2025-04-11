@@ -1852,8 +1852,25 @@ def anonymize_datas():
             "error": str(e)
         }), 500
 
-# pdf extraction modules
-
+@app.route('/api/cleanup-temp', methods=['POST'])
+def cleanup_temp():
+    try:
+        temp_dir = os.path.join(BASE_DIR, 'app_temp')
+        if os.path.exists(temp_dir):
+            for file in os.listdir(temp_dir):
+                file_path = os.path.join(temp_dir, file)
+                try:
+                    if os.path.isfile(file_path):
+                        os.remove(file_path)
+                        logging.info(f"Deleted file: {file_path}")
+                except Exception as e:
+                    logging.error(f"Error removing {file_path}: {e}")
+            return jsonify({'success': True, 'message': 'Temporary directory cleaned'}), 200
+        else:
+            return jsonify({'success': False, 'message': 'Temporary directory not found'}), 404
+    except Exception as e:
+        logging.error(f"Error cleaning temporary directory: {e}")
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 # UPLOAD_FOLDER = r'app_temp'
 # # Ensure the upload folder exists
