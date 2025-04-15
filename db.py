@@ -146,6 +146,43 @@ async def update_user_metrics(container, user_id, tokens_used, training_run=Fals
     except Exception as e:
         logging.error(f"Error updating user metrics: {e}")
         return False
+@app.route('/api/initialize-user', methods=['POST'])
+def initialize_user():
+    try:
+        data = request.get_json()
+        user_id = data.get('userId')
+        user_name = data.get('userName', 'Unknown User')
+        
+        if not user_id:
+            return jsonify({"error": "userId is required"}), 400
+            
+        # Check if user already exists
+        query = f"SELECT * FROM c WHERE c.userId = '{user_id}'"
+        items = list(container.query_items(query=query, enable_cross_partition_query=True))
+        
+        if not items:
+            # Create new user document with default values
+            new_doc = {
+                "id": user_id,
+                "userId": user_id,
+                "userName": user_name,
+                "apiKey": "",  # Empty API key by default
+                "balance": 0,  # Default balance
+                "lastUpdated": datetime.utcnow().isoformat(),
+                "metrics": {
+                    'total_tokens': 0,
+                    'training_runs': 0,
+                    'sessions': [],
+                    'last_updated': datetime.utcnow().isoformat()
+                },
+                "transactions": []
+            }
+            container.create_item(new_doc)
+            
+        return jsonify({"success": True}), 200
+    except Exception as e:
+        logging.error(f"Error initializing user: {e}")
+        return jsonify({"error": str(e)}), 500        
 @app.route('/api/get-balance', methods=['GET'])
 def get_balance():
     user_id = request.args.get('userId')
