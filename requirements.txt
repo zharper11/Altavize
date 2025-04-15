@@ -11,4 +11,7 @@ PyMuPDF
 python-dotenv
 Werkzeug
 aiohttp
+pycountry
+spacy
+countryinfo
 gunicorn
