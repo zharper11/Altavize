@@ -388,8 +388,8 @@ def create_recharge_session():
                 'quantity': 1,
             }],
             mode='payment',
-            success_url='https://stripeteststorage1.z13.web.core.windows.net/checkout.html?payment=success',
-            cancel_url='https://stripeteststorage1.z13.web.core.windows.net/checkout.html?payment=canceled',
+            success_url='https://altavize.z13.web.core.windows.net/checkout1.html?payment=success',
+            cancel_url='https://altavize.z13.web.core.windows.net/checkout1.html?payment=canceled',
             client_reference_id=user_id,
             metadata={'type': 'recharge'}
         )
@@ -554,8 +554,8 @@ def create_checkout_session():
                 'quantity': 1,
             }],
             mode='subscription',
-            success_url='https://stripeteststorage1.z13.web.core.windows.net/checkout.html?payment=success',
-            cancel_url='https://stripeteststorage1.z13.web.core.windows.net/checkout.html?payment=canceled',
+            success_url='https://altavize.z13.web.core.windows.net/checkout1.html?payment=success',
+            cancel_url='https://altavize.z13.web.core.windows.net/checkout1.html?payment=canceled',
             client_reference_id=user_id,
         )
 
