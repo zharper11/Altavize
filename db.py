@@ -2611,6 +2611,15 @@ def run_extraction(encoded_images_data, prompt, api_key, Confidence_return, gptm
                     # (if not available, we won't update doc_df)
                     raise response_tuple  # jump to the except block
                 
+                # Reset any globals for logprobs processing
+                global doc_logprobs_split, doc_level_logprobs, line_items_logprobs, current_line_item_index, all_item_probs
+                doc_logprobs_split = False
+                doc_level_logprobs = []
+                line_items_logprobs = []
+                current_line_item_index = 0
+                all_item_probs = []
+                
+                # Process the response
                 response_metadata = response_tuple[2]
                 response_data = response_tuple[1]
                 row_id = response_metadata.get('row_id')
@@ -2619,9 +2628,19 @@ def run_extraction(encoded_images_data, prompt, api_key, Confidence_return, gptm
                 
                 response_text = response_data['choices'][0]['message']['content']
                 # Grab logprobs for confidence calculation later if needed
-                logprobs_content = response_data['choices'][0]['logprobs']['content']
+                logprobs_content = response_data['choices'][0]['logprobs']['content']  # Already a Python list
+                logging.info(f"Type of logprobs_content: {type(logprobs_content)}")
+                logging.info(f"First few items of logprobs_content: {logprobs_content[:2] if isinstance(logprobs_content, list) else logprobs_content}")
+                
+                # Save logprobs to file
+                # logprobs_file_path = os.path.join(r"C:\Users\ZacharyHarper\Documents\Chat Noir\PDF Extraction", 
+                #                                 f"logprobs_{pdf_data['file_name'].replace('.pdf', '')}.json")
+                # with open(logprobs_file_path, 'w', encoding='utf-8') as f:
+                #     json.dump(logprobs_content, f, indent=4, ensure_ascii=False)
+                
                 mapping_dict = json.loads(response_text)
-    
+                logging.info(f"Mapping dict structure for file {pdf_data['file_name']}:")
+                logging.info(json.dumps(mapping_dict, indent=2))
                 # Update token usage counts
                 usage = response_data.get('usage', {})
                 input_tokens += usage.get('prompt_tokens', 0)
@@ -2631,38 +2650,90 @@ def run_extraction(encoded_images_data, prompt, api_key, Confidence_return, gptm
                 doc_fields = mapping_dict.get("Document-Level Fields", {})
                 line_items = mapping_dict.get("Line-Item Fields", [])
 
-                # Original wide-format approach
-                data = {'file_name': pdf_data['file_name']}
-                data.update(doc_fields)
-                doc_df = pd.DataFrame([data])
-                for i, item in enumerate(line_items, start=1):
-                    for key, value in item.items():
-                        doc_df[f"{key} {i}"] = value
+                if flatten_line_items or not doc_fields:
+                    row_dfs = []
+                    logprobs_holder = logprobs_content 
+                    
+                    # --- Step 1: Process Document-Level Fields --- 
+                    doc_logprobs_section = []
+                    base_data = {'file_name': pdf_data['file_name']}
+                    base_data.update(doc_fields)
+                    
+                    if calculate_confidence: 
+                        # Check if doc_fields exists and is not None (even if empty)
+                        has_doc_fields = doc_fields is not None
+                        doc_logprobs_section, logprobs_holder = split_logprobs(True, doc_fields, logprobs_holder)
+                        
+                        # If we have document fields (even empty ones), calculate confidence
+                        if has_doc_fields and doc_logprobs_section: 
+                           doc_df_temp = pd.DataFrame([base_data]) 
+                           doc_df_temp = calculate_confidence(doc_df_temp, doc_logprobs_section) 
+                           for col in doc_df_temp.columns:
+                               if 'Confidence' in col:
+                                   base_data[col] = doc_df_temp.at[0, col]
+                        else:
+                            logging.warning("Document section split failed or no document fields.")
 
-                if Confidence_return and logprobs_content:
-                    doc_df = calculate_confidence(doc_df, logprobs_content)
+                    current_remaining_logprobs = logprobs_holder
+                        
+                    for i, item in enumerate(line_items, start=1):
+                        logging.info(f"--- Processing Line Item {i} ---")
+                        row_data = base_data.copy() 
+                        row_data.update(item) 
+                        line_item_section = []
+                        if calculate_confidence:
+                            line_item_section, current_remaining_logprobs = split_logprobs(False, item, current_remaining_logprobs)
+                            
+                            if line_item_section: 
+                                item_df = pd.DataFrame([item]) 
+                                item_df = calculate_confidence(item_df, line_item_section)
+                                for col in item_df.columns:
+                                    if 'Confidence' in col:
+                                        row_data[col] = item_df.at[0, col]
+                                logging.info(f"Updated row_data with line item {i} confidence.")
+                            else:
+                                logging.warning(f"Split failed for line item {i}, skipping confidence calculation.")
+                        
+                        row_dfs.append(pd.DataFrame([row_data]))
+
+                    # --- Write Debug Data to File --- 
+                    # try:
+                    #     with open(debug_file_path, 'w', encoding='utf-8') as f:
+                    #         json.dump(split_debug_data, f, indent=4)
+                    #     logging.info(f"Split debug data saved to: {debug_file_path}")
+                    # except Exception as e:
+                    #     logging.error(f"Failed to write split debug data: {e}")
+                    # --- End Write Debug ---
+
+                    # Combine all row DataFrames into the final result for this document
+                    if row_dfs:
+                        doc_df = pd.concat(row_dfs, ignore_index=True)
+                    else: # Handle case where there were no line items or all splits failed
+                         # If base_data exists (i.e., doc_fields were processed or present)
+                         if base_data:
+                              doc_df = pd.DataFrame([base_data])
+                         else: # Truly empty case
+                              doc_df = pd.DataFrame() 
+                    logging.info(f"Finished processing document. Final DF shape: {doc_df.shape}")
                 else:
-                    print(f"Skipping confidence calculation for {pdf_data['file_name']}. Confidence_return: {Confidence_return}, logprobs available: {logprobs_content is not None}")
-                
-                # Store the DataFrame by row_id for ordered collection later
+                    # Original wide-format approach
+                    data = {'file_name': pdf_data['file_name']}
+                    data.update(doc_fields)
+                    doc_df = pd.DataFrame([data])
+                    for i, item in enumerate(line_items, start=1):
+                        for key, value in item.items():
+                            doc_df[f"{key} {i}"] = value
+
+                    if Confidence_return and logprobs_content:
+                        doc_df = calculate_confidence(doc_df, logprobs_content)
+                    else:
+                        print(f"Skipping confidence calculation for {pdf_data['file_name']}. Confidence_return: {Confidence_return}, logprobs available: {logprobs_content is not None}")
+                    # Store the DataFrame by row_id for ordered collection later
                 result_dfs[row_id] = doc_df
-
             except Exception as e:
-                logging.error(f"Error processing file {pdf_data['file_name'] if 'pdf_data' in locals() else 'unknown'}: {e}")
+                logging.error(f"Error processing row {row_id}: {str(e)}")
                 if row_id is not None:
-                    # Mark this row as an error
-                    doc_df.at[row_id, 'file_name'] = pdf_data['file_name'] if 'pdf_data' in locals() else 'unknown'
-                    doc_df.at[row_id, 'error'] = str(e)
-                    # Store the error DataFrame by row_id
-                    result_dfs[row_id] = doc_df
-                else:
-                    # Create a separate error DataFrame if we can't identify the row
-                    error_df = pd.DataFrame({
-                        "file_name": [pdf_data['file_name'] if 'pdf_data' in locals() else 'unknown'],
-                        "error": [str(e)],
-                    })
-                    # Add to all_pdf_details directly since we don't have a row_id
-                    all_pdf_details.append(error_df)
+                    result_dfs[row_id] = pd.DataFrame()  # Store empty DataFrame for failed processing
         
         # Now add DataFrames to all_pdf_details in order of row_id
         for i in range(len(encoded_images_data)):
@@ -2671,98 +2742,11 @@ def run_extraction(encoded_images_data, prompt, api_key, Confidence_return, gptm
                     
     except Exception as e:
         logging.error(f"Error in extraction process: {e}")
-
-
-
-    if flatten_line_items:
-        # Use doc_df directly instead of all_pdf_details
-        combined_df = pd.concat(all_pdf_details, ignore_index=True) if all_pdf_details else pd.DataFrame()
-        
-        # 1. Identify document fields vs line item fields
-        doc_fields = []
-        line_item_fields = set()
-        max_line_item_num = 0
-        
-        for col in combined_df.columns:
-            # Check if this is a confidence column
-            if " Confidence" in col:
-                # Remove the "Confidence" part to get the base field
-                base_col = col.replace(" Confidence", "")
-                # Now check this base field like any other column
-                parts = base_col.split(' ')
-                if len(parts) > 1 and parts[-1].isdigit():
-                    # This is a confidence for a line item field
-                    base_field = ' '.join(parts[:-1])
-                    item_num = int(parts[-1])
-                    line_item_fields.add(base_field)
-                    max_line_item_num = max(max_line_item_num, item_num)
-                else:
-                    # This is a confidence for a document field
-                    doc_fields.append(col)
-            else:
-                # Regular non-confidence column
-                parts = col.split(' ')
-                if len(parts) > 1 and parts[-1].isdigit():
-                    # This is a line item field (e.g., "Item 1")
-                    base_field = ' '.join(parts[:-1])
-                    item_num = int(parts[-1])
-                    line_item_fields.add(base_field)
-                    max_line_item_num = max(max_line_item_num, item_num)
-                else:
-                    # This is a document field
-                    doc_fields.append(col)
-        
-        # 2. Create flattened rows
-        flattened_rows = []
-        
-        # For each row in the original DataFrame
-        for idx, row in combined_df.iterrows():
-            # Get document fields for this row (should include doc-level confidence)
-            doc_row = {field: row[field] for field in doc_fields}
-            print(f"--- Processing Row {idx} ---")
-            print(f"  Document fields collected: {list(doc_row.keys())}")
-            doc_conf_values = {k: v for k, v in doc_row.items() if 'Confidence' in k}
-            print(f"  Document confidence values found: {doc_conf_values}")
-            
-            # For each line item number
-            for i in range(1, max_line_item_num + 1):
-                # Start with document fields
-                new_row = doc_row.copy()
-                
-                # Check if this line item exists
-                has_data = False
-                
-                # Add line item fields
-                for base_field in line_item_fields:
-                    numbered_field = f"{base_field} {i}"
-                    if numbered_field in combined_df.columns:
-                        value = row[numbered_field]
-                        if not pd.isna(value) and str(value).strip() != '':
-                            new_row[base_field] = value
-                            has_data = True
-                    
-                    # Also add confidence if it exists
-                    conf_field = f"{numbered_field} Confidence"
-                    if conf_field in combined_df.columns:
-                        new_row[f"{base_field} Confidence"] = row[conf_field]
-                
-                # Only add the row if it has line item data
-                if has_data:
-                    flattened_rows.append(new_row)
-        
-        # 3. Create final DataFrame
-        if flattened_rows:
-            final_df = pd.DataFrame(flattened_rows)
-        else:
-            # Fallback to original data if no flattened rows were created
-            final_df = combined_df
-
+    # No flattening, just concatenate all PDF details
+    if all_pdf_details:
+        final_df = pd.concat(all_pdf_details, ignore_index=True)
     else:
-        # No flattening, just concatenate all PDF details
-        if all_pdf_details:
-            final_df = pd.concat(all_pdf_details, ignore_index=True)
-        else:
-            final_df = pd.DataFrame()
+        final_df = pd.DataFrame()
     
     return final_df
 
@@ -3145,6 +3129,39 @@ def delete_file():
             'success': False,
             'message': f'Error deleting file: {str(e)}'
         }), 500
+
+def split_logprobs(opener, row_data, logprobs_content):
+    matching_section = []
+    current_index = 0  
+    opening_counter = 0
+    closing_counter = 0
+    
+    while current_index < len(logprobs_content):
+        token_data = logprobs_content[current_index]
+        token_value = token_data['token']
+        if "{" in token_value:  
+            opening_counter += 1
+        if "}" in token_value: 
+            closing_counter += 1
+
+        if opener == True:
+            if opening_counter == 2 and closing_counter == 1:
+                matching_section = logprobs_content[:current_index+1]
+                remaining_section = logprobs_content[current_index+1:]
+                return matching_section, remaining_section
+            
+        elif opener == False:
+            if opening_counter == 1 and closing_counter == 1:
+                matching_section = logprobs_content[:current_index+1]
+                remaining_section = logprobs_content[current_index+1:]
+                return matching_section, remaining_section
+        else:
+            raise ValueError(f"Invalid opener: {opener}")
+
+        current_index += 1  # Increment the index to move to the next token
+    
+    # If we reach here, we couldn't find matching brackets
+    return logprobs_content, []
 
 if __name__ == '__main__':
     load_dotenv()
