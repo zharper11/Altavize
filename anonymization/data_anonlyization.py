@@ -259,10 +259,28 @@ class DataAnonymizer:
         # Use the provided absolute path for prompts directory
         current_file_path = os.path.dirname(os.path.abspath(__file__))
         project_root = os.path.dirname(os.path.dirname(current_file_path))
-        self.prompts_dir = Path(os.path.join(project_root, "analysis", "Prompt"))
+        primary_path = Path(os.path.join(project_root, "analysis", "Prompt"))
         
-        if not self.prompts_dir.exists():
-            raise ValueError(f"Prompts directory not found at {self.prompts_dir}")
+        # Check the primary path first (from pasted text 1)
+        if primary_path.exists():
+            self.prompts_dir = primary_path
+            self.logger.info(f"Found Prompt directory at primary location: {self.prompts_dir}")
+        else:
+            # Then try the alternative paths in order
+            possible_paths = [
+                Path("Prompt"),  # Current directory
+                Path(os.path.join(os.path.dirname(os.path.abspath(__file__)), "Prompt")),  # Same dir as this file
+                Path(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "Prompt")),  # One level up
+                Path(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "analysis", "Prompt")),  # In analysis folder
+                Path(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "Prompt"))  # Two levels up
+            ]
+            
+            self.prompts_dir = None
+            for path in possible_paths:
+                if path.exists():
+                    self.prompts_dir = path
+                    self.logger.info(f"Found Prompt directory at alternative location: {self.prompts_dir}")
+                    break
         
         # Initialize prompt file mapping with correct filenames
         self.prompt_files = {
